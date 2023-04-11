@@ -1,15 +1,32 @@
 import re
+import requests
+from bs4 import BeautifulSoup
+
+def is_version_inside_wildcard(version_wildcard, version_str):
+    version_wildcard_parts = re.split(r'\.', version_wildcard)
+    version_str_parts = re.split(r'\.', version_str)
+
+    if len(version_wildcard_parts) != len(version_str_parts):
+        return False
+
+    for i, wildcard_part in enumerate(version_wildcard_parts):
+        if wildcard_part == 'x' or wildcard_part == 'X':
+            continue
+        elif wildcard_part != version_str_parts[i]:
+            return False
+
+    return True
 
 # Function to remove alpha, beta, and rc version identifiers from a version string
 def clean_version(version):
-    version = re.sub(r'(-alpha|-beta|-rc)\.?\d*', '', version)
+    version = re.sub(r'(-alpha|-beta|-rc)[^ ]*', '', version)
     return version
 
 # Function to convert a version string into a tuple of integers
 def version_to_tuple(version):
     if not version:
         return (0, 0, 0)
-    version_numbers = version.split(".")[:2]
+    version_numbers = version.split(".")[:3]
     return tuple(map(int, version_numbers))
 
 # Function to check if a given version is vulnerable given a vulnerable version range
@@ -22,7 +39,7 @@ def is_vulnerable(version, vul_version):
 
     # Split the vulnerable version range into individual ranges
     ranges = re.split(r'\s*\|\|\s*', vul_version)
-
+    print(f'range {ranges}')
     # Loop through each range and check if the version is within that range
     for range_str in ranges:
         if '-' in range_str:
@@ -36,8 +53,10 @@ def is_vulnerable(version, vul_version):
         elif '>=' in range_str and '<' in range_str:
             # Range specified with a greater-than-or-equal-to and a less-than symbol
             lower, upper = re.findall(r'\d+\.\d+\.\d+', range_str)
+            print(lower, upper)
             lower = version_to_tuple(lower.strip('><= '))
             upper = version_to_tuple(upper.strip('><= '))
+            print(lower, upper)
             if lower <= clean_version_number < upper:
                 return True
         elif '>' in range_str and '<=' in range_str:
@@ -67,54 +86,36 @@ def is_vulnerable(version, vul_version):
             lower = version_to_tuple(range_str.strip('><= '))
             if clean_version_number > lower:
                 return True
-
+        elif 'x' in range_str or 'X' in range_str:
+            version = clean_version(version)
+            return is_version_inside_wildcard(range_str,version)
+        
     # Version is not vulnerable
     return False
 
 
-vul_versions = [
-    "3.0.0 || 4.0.0 - 4.1.0",
-    "1.0.0-rc1 - 2.1.8",
-    "<0.2.1",
-    "2.5.0 - 2.5.2 || 4.2.0 - 5.0.0-rc.0",
-    "<5.1.2",
-    "<1.3.6",
-    "12.1.2-alpha.6230044c - 25.5.4",
-    "12.1.1-alpha.2935e14d || 12.1.2-alpha.6230044c - 25.5.4",
-    "12.1.1-alpha.2935e14d - 25.5.4",
-    "10.0.2 - 25.5.0",
-    "24.2.0-alpha.0 - 25.5.4",
-    "21.0.0-alpha.1 - 25.5.4",
-    "12.1.1-alpha.2935e14d - 25.5.4",
-    "<=16.5.3",
-    "<0.4.0",
-    "<1.0.2 || >=2.0.0 <2.2.2",
-    "0.3.0 - 1.4.1 || 2.0.0 - 2.0.1",
-    "<=1.4.1",
-    "<3.0.5",
-    "<=0.2.3 || 1.0.0 - 1.2.5",
-    "0.4.1 - 0.5.1",
-    "<2.6.7",
-    "<8.0.1",
-    "6.5.0 - 6.5.2",
-    "3.7.10 - 4.0.2",
-    "<=4.4.17",
-    "<4.8.1",
-    "1.7.2 - 1.7.5",
-    "1.3.0 - 1.3.3 || 3.3.5 - 3.3.11",
-    "<11.8.5",
-    "<4.1.1",
-    "2.0.0 - 2.0.5",
-    "2.0.0 - 2.0.5",
-    "2.1.x"
+def get_version ():
+    url = 'https://github.com/advisories/GHSA-xvch-5gv4-984h'
 
-]
+    response = requests.get(url)
+    soup = BeautifulSoup(response.content, 'html.parser')
+    # Obtain the Affected verisons from the advisory page of the vulnerable package
+    affected_version = soup.find(
+        'div', {'class': 'float-left col-6 col-md-3 py-2 py-md-0 pr-2'}).text.strip()
+    vulnerable_versions = affected_version.split('\n')
+    # Remove the 'Affected Version:' string"
+    vulnerable_versions.pop(0)
+    
+    return vulnerable_versions
+
+
+vul_versions = ["1.x.0"]
 
 for vul_version in vul_versions:
-    print("2.1.1")
-    print(vul_version)
-    result = is_vulnerable("2.1.1", vul_version)
-   
+    data = get_version()
+    print(data)
+    result = is_vulnerable("5.7.4", '>=5.5.0 <5.7.4')
+    
     print(result)
     print("---------------------")
 

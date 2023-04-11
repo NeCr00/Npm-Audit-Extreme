@@ -6,6 +6,7 @@ if os.name == 'nt':
     import colorama
     colorama.init()
 
+
 class Log:
     # Define a private method for logging with color
     @staticmethod
@@ -33,12 +34,12 @@ class Log:
     # Define public methods for logging with different colors
     @staticmethod
     def error(message):
-        Log._log(message, 'red')
+        Log._log('[ERROR]-> ' + message, 'red')
 
     @staticmethod
     def success(message):
-        Log._log(message, 'green')
+        Log._log('[SUCCESS]-> ' + message, 'green')
 
     @staticmethod
     def info(message):
-        Log._log(message, 'blue')
+        Log._log('[INFO]-> ' + message, 'blue')
