@@ -34,7 +34,7 @@ def main():
     #npm audit provides only the vulnerable range of veersion and not the exact vulnerable
     #version that are found in the project
     VulnerabilityComparator = VulnerabilityProcessor(ExtractedResults.processed_results, ExtractedPackagesVersions.packages)
-    #print(json.dumps(VulnerabilityComparator.vulnerable_packages, indent=4))
+    print(ExtractedResults.stats)
     
 if __name__ == '__main__':
     main()

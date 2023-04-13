@@ -9,12 +9,13 @@ class AdvisoriesVulnVersions:
         soup = BeautifulSoup(response.content, 'html.parser')
         # Obtain the Affected versions from the advisory page of the vulnerable package
         affected_version = soup.find(
-            'div', {'class': 'float-left col-6 col-md-3 py-2 py-md-0 pr-2'}).text.strip()
+            'div', {'class': 'markdown-body comment-body p-0'}).text.strip()
         #split all the elements with the affected versions by line
         vulnerable_versions = affected_version.split('\n')
         # Remove the 'Affected Version:' string which is presented as first element "
         vulnerable_versions.pop(0)
 
+        print(vulnerable_versions)
         return vulnerable_versions
     
     
@@ -37,7 +38,7 @@ class AdvisoriesVulnVersions:
             clean_affected_versions.append(affected_version)
     '''
 
-
+AdvisoriesVulnVersions.get_advisories_html_affected_versions("https://github.com/advisories/GHSA-qgmg-gppg-76g5")
 
 
 

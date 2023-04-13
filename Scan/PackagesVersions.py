@@ -1,5 +1,5 @@
 import json
-from Log import Log
+from Log.Log import Log
 
 """
     This file obtains a list of all the paths that the package-lock.json files are presented in the project.

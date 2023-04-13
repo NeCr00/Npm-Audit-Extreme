@@ -4,7 +4,7 @@ import sys
 import subprocess
 import json
 
-from Log import Log
+from Log.Log import Log
 
 
 class AuditCode:
