@@ -1,5 +1,5 @@
 
-from Log import Log
+from Log.Log import Log
 import json
 
 
@@ -28,10 +28,11 @@ class ExtractResults:
 
             # Get the vulnerability field containing the actual results
             vulnerabilities = result["vulnerabilities"]
+            path = result["path"]
             # Extract all the vulnerable packages and their informations
             vuln_packages = self.get_packages_name(vulnerabilities)
             for package in vuln_packages:
-                self.get_attributes(vulnerabilities[package])
+                self.get_attributes(vulnerabilities[package],path)
 
         except Exception as e:
             Log.error('No vulnerabilities available')
@@ -45,11 +46,15 @@ class ExtractResults:
         # print(vuln_packages)
         return vuln_packages
 
-    def get_attributes(self, package):
+    def get_attributes(self, package,path):
         extracted_data = {}
 
         # Get the name of the vulnerable package
         extracted_data["package_name"] = package["name"]
+        
+        #add the component path of the installed package
+        extracted_data["path"] = []
+        extracted_data["path"].append(path)
         # Get the version of the vulnerable package
         extracted_data["vul_version"] = package["range"]
         # Get overall Severity of the vulnerability
@@ -59,6 +64,7 @@ class ExtractResults:
             package["via"], package["name"])
 
         # save the results
+        #self.saveVulnerablePackage(extracted_data,path)
         self.processed_results.append(extracted_data)
 
     def getVulnerabilityDetails(self, vuln_details, package_name=None):
@@ -96,12 +102,35 @@ class ExtractResults:
             return ([], False)
 
 
+    def saveVulnerablePackage(self, newData,path):
+        # Check if the vulnerable package is already present in the processed_results
+        for package in self.processed_results:
+            if package["package_name"] == newData["package_name"]:
+                # Check if the vulnerability version matches
+                if package["vul_version"] == newData["vul_version"]:
+                    # Update the path value of the existing package with the new one
+                    package["path"].append(path)
+                    return
+        # If the vulnerable package is not already present in the processed_results, add it
+        
+        self.processed_results.append(newData)
+
+        
+
     def calculate_vulnerabilities_stats (self):
         
-        
+        overall_stats = {'dependencies':0,'info': 0, 'low': 0, 'moderate': 0, 'high': 0, 'critical': 0, 'total': 0}
         for result in self.results:
             
-            metadata = result["metadata"]["vulnerabilities"]    
+            metadata = result["metadata"]["vulnerabilities"]
             print(metadata)
+            
+            overall_stats["info"] += metadata["info"]
+            overall_stats["low"] += metadata["low"]
+            overall_stats["moderate"] += metadata["moderate"]
+            overall_stats["high"] += metadata["high"]
+            overall_stats["critical"] += metadata["critical"]
+            overall_stats["total"] += metadata["total"]
         
+        return overall_stats
         

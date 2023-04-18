@@ -2,6 +2,7 @@ from Processor.ExtractResults import ExtractResults
 from Scan.AuditCode import AuditCode
 from Processor.VulnerabilityProcessor import VulnerabilityProcessor
 from Scan.PackagesVersions import PackagesVersions
+from ReportGeneration.Report import Report
 from Log import Log
 import sys
 import json
@@ -33,8 +34,10 @@ def main():
     #Find the exact vulnerable versions that are present in the project
     #npm audit provides only the vulnerable range of veersion and not the exact vulnerable
     #version that are found in the project
-    VulnerabilityComparator = VulnerabilityProcessor(ExtractedResults.processed_results, ExtractedPackagesVersions.packages)
-    print(ExtractedResults.stats)
+    #VulnerabilityComparator = VulnerabilityProcessor(ExtractedResults.processed_results, ExtractedPackagesVersions.packages)
+    # print(ExtractedResults.stats)
+    print(json.dumps(ExtractedResults.processed_results))
+    #report = Report(VulnerabilityComparator.vulnerable_packages[0])
     
 if __name__ == '__main__':
     main()

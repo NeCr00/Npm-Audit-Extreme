@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import concurrent.futures
+from lxml import html
 
 class CVEFinder:
     # Static method that takes an advisory URL as input and returns a link to a related CVE entry, if one exists
@@ -20,17 +21,16 @@ class CVEFinder:
     @staticmethod
     def get_cve_description(advisory_url):
         cve_url = CVEFinder.get_cve_link(advisory_url)
-        if not cve_url:
-            return None
-        with requests.Session() as session:
-            response = session.get(cve_url)
-        soup = BeautifulSoup(response.content, 'lxml')
-        # Look for a <p> tag with a 'data-testid' attribute set to 'vuln-description', which contains the CVE entry's description
-        description = soup.find('p', {'data-testid': 'vuln-description'})
-        if description:
+        if(cve_url):
+            with requests.Session() as session:
+                response = session.get(cve_url)
+            soup = BeautifulSoup(response.content, 'lxml')
+            # Look for a <p> tag with a 'data-testid' attribute set to 'vuln-description', which contains the CVE entry's description
+            description = soup.find('p', {'data-testid': 'vuln-description'})
             return description.text
+        
         else:
-            return None
+            return CVEFinder.getAdvisoryDescription(advisory_url)
     
     # Static method that takes a list of advisory URLs as input and returns a list of the corresponding CVE entry descriptions, obtained asynchronously using threads
     @staticmethod
@@ -44,5 +44,17 @@ class CVEFinder:
                 results.append(result)
         return results
 
-
-print(CVEFinder.get_cve_descriptions_async(["https://github.com/advisories/GHSA-qgmg-gppg-76g5","https://github.com/advisories/GHSA-qgmg-gppg-76g5","https://github.com/advisories/GHSA-qgmg-gppg-76g5","https://github.com/advisories/GHSA-qgmg-gppg-76g5"]))
+    @staticmethod
+    def getAdvisoryDescription(url):
+        # Get the HTML content from the URL
+        response = requests.get(url)
+        # Parse the HTML content with BeautifulSoup
+        soup = BeautifulSoup(response.content, 'html.parser')
+        # Find the <div> element with class 'markdown-body comment-body p-0'
+        div = soup.find('div', class_='markdown-body comment-body p-0')
+        # Find all <p> elements inside the <div> element
+        p_tags = div.find_all('p')
+        # Concatenate the text content of all <p> elements into a single string
+        description = '\n\n'.join([p.text.strip() for p in p_tags])
+        
+        return description

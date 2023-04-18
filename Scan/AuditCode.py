@@ -63,7 +63,10 @@ class AuditCode:
         for directory in self.auditable_paths:
             try:
                 result = subprocess.run(['npm', 'audit', '--json'], cwd=directory, capture_output=True, text=True)
-                results_audit.append(result.stdout)
+                result_json = json.loads(result.stdout)
+                result_json["path"] = self.getComponentPath(directory)
+                
+                results_audit.append(result_json)
                 # log a message indicating the audit has been finished
                 Log.info('Finished auditing %s/package-lock.json' % directory)
             except subprocess.CalledProcessError:
@@ -71,10 +74,21 @@ class AuditCode:
                 Log.error(f'Error running npm audit in {directory}')
         
         # parse the JSON results and return them
-        json_results = [json.loads(result) for result in results_audit]
+        json_results = [result for result in results_audit]
         Log.success("Finished auditing project directories")
         return json_results
 
     # method to get the audit results in JSON format
     def get_results_json(self):
         return json.dumps(self.results)
+
+    def getComponentPath(self, directory):
+        project_path = self.project_dir
+        project_folder = self.project_dir.split('/')
+        project_folder = project_folder[len(project_folder) - 1]
+        
+        # Get the relative path of the directory with respect to the project directory
+        relative_path = os.path.relpath(directory, project_path)
+        return '/'+project_folder+'/'+relative_path
+
+        
