@@ -30,13 +30,12 @@ def main():
 #----------------------------- Data Processing -----------------------------
     #Extract the vital information from the Npm audit scan results
     ExtractedResults = ExtractResults(Scanner.results)
-    
     #Find the exact vulnerable versions that are present in the project
     #npm audit provides only the vulnerable range of veersion and not the exact vulnerable
     #version that are found in the project
-    #VulnerabilityComparator = VulnerabilityProcessor(ExtractedResults.processed_results, ExtractedPackagesVersions.packages)
-    # print(ExtractedResults.stats)
-    print(json.dumps(ExtractedResults.processed_results))
+    VulnerabilityComparator = VulnerabilityProcessor(ExtractedResults.processed_results, ExtractedPackagesVersions.packages)
+    #print(ExtractedResults.stats)
+    print(json.dumps(VulnerabilityComparator.cleanVulnerablePackages))
     #report = Report(VulnerabilityComparator.vulnerable_packages[0])
     
 if __name__ == '__main__':
